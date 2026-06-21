@@ -1,0 +1,11 @@
+# The app lives in the frontend/ subfolder of this monorepo.
+[build]
+  base = "frontend"
+  command = "npm run build"
+  publish = "dist"            # relative to base → frontend/dist
+
+# SPA fallback so React Router routes (e.g. /sheet/:id) don't 404 on refresh.
+[[redirects]]
+  from = "/*"
+  to = "/index.html"
+  status = 200
