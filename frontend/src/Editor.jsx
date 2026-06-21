@@ -2,8 +2,7 @@ import { useEffect, useMemo, useState } from 'react'
 import { useNavigate, useParams, useBlocker } from 'react-router-dom'
 import { FormProvider, useForm } from 'react-hook-form'
 import TechnicalSheet from './TechnicalSheet'
-import { blankSheet, getSheet, saveSheet, sheetTitle, todayStr, findDuplicate, useSheets } from './sheetStore'
-import { importExcel } from './excel'
+import { blankSheet, getSheet, saveSheet, sheetTitle, findDuplicate, useSheets, createSheetFromData } from './sheetStore'
 
 // Section anchors for the in-editor quick nav (recognition over recall).
 const SECTIONS = [
@@ -57,49 +56,10 @@ export default function Editor() {
     methods.reset(values) // adopt saved values as the new clean baseline
   }
 
-  // --- Import / template (.xlsx) ---
-  const handleImport = async (e) => {
-    const file = e.target.files?.[0]
-    e.target.value = '' // allow re-importing the same file
-    if (!file) return
-    try {
-      // Sheet picker for multi-sheet (TC Format Rev.2) workbooks.
-      const pickSheet = (names) => {
-        const ans = window.prompt(
-          'ไฟล์นี้มีหลาย sheet เลือกที่จะนำเข้า (พิมพ์เลข):\n\n' +
-            names.map((n, i) => `${i + 1}. ${n}`).join('\n'),
-          '1',
-        )
-        if (ans == null) return null
-        const idx = parseInt(ans, 10) - 1
-        return names[idx] || null
-      }
-
-      const result = await importExcel(file, pickSheet)
-      if (result === null) return // user cancelled the sheet picker
-
-      const parsed = result.data
-      const count = Object.values(parsed).filter((v) => typeof v === 'string' && v.trim() !== '').length
-      if (count === 0) {
-        alert(
-          'ไม่พบข้อมูลที่ตรงกับฟอร์มในไฟล์นี้\n\n' +
-            'รองรับ 2 รูปแบบ:\n' +
-            '• ไฟล์ Technical Sheet จริง (TC Format Rev.2)\n' +
-            '• ไฟล์ 2 คอลัมน์ (A = ชื่อฟิลด์ เช่น partNo, B = ค่า) — กด "เทมเพลต Excel" เพื่อดูตัวอย่าง',
-        )
-        return
-      }
-
-      const cur = methods.getValues()
-      methods.reset(
-        { ...cur, ...parsed, issuedDate: todayStr() }, // keep the issued date current
-        { keepDefaultValues: true },
-      )
-      const from = result.source ? ` จาก sheet "${result.source}"` : ''
-      alert(`นำเข้าสำเร็จ: เติมข้อมูล ${count} ฟิลด์${from}`)
-    } catch (err) {
-      alert('นำเข้าไฟล์ Excel ไม่สำเร็จ: ' + err.message)
-    }
+  // --- New document in the SAME model as the one currently open ---
+  const handleNewInModel = () => {
+    const rec = createSheetFromData({ model: methods.getValues('model') || '' })
+    navigate(`/sheet/${rec.id}`)
   }
 
   // --- Warn on unsaved changes ---
@@ -184,15 +144,9 @@ export default function Editor() {
             ))}
           </select>
 
-          <label className="btn ghost">
-            📥 นำเข้า Excel
-            <input
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-              onChange={handleImport}
-              hidden
-            />
-          </label>
+          <button className="btn ghost" onClick={handleNewInModel} title="สร้างเอกสาร Part No. ใหม่ ใน Model เดียวกัน">
+            ＋ Part No. ใหม่
+          </button>
           <button className="btn ghost" onClick={() => setPreview(true)}>👁️ Export</button>
           <button className="btn primary" onClick={handleSave} disabled={!isDirty}>💾 บันทึก</button>
         </div>

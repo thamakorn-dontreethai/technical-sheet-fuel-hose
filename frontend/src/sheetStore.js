@@ -75,7 +75,8 @@ export function createSheetFromData(data) {
   const now = Date.now()
   const record = {
     id: crypto.randomUUID(),
-    data: { ...blankSheet(), ...data, issuedDate: todayStr() },
+    // Keep an imported ISSUED DATE (from Excel); fall back to today when absent.
+    data: { ...blankSheet(), ...data, issuedDate: data.issuedDate || todayStr() },
     createdAt: now,
     updatedAt: now,
   }

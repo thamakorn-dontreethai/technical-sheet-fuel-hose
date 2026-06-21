@@ -104,6 +104,7 @@ function parseVisualSheet(wb, sheetName) {
     code: cv(ws, 'M5'),
     documentNo: cv(ws, 'W5'),
     partNo: cv(ws, 'F6'),
+    issuedDate: cd(ws, 'W6'), // keep the ISSUED DATE from the Excel file
     partName: cv(ws, 'F7'),
     revisionNo: cv(ws, 'W7'),
 
