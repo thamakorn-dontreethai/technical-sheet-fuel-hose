@@ -1,0 +1,218 @@
+import { useEffect, useMemo, useState } from 'react'
+import { useNavigate, useParams, useBlocker } from 'react-router-dom'
+import { FormProvider, useForm } from 'react-hook-form'
+import TechnicalSheet from './TechnicalSheet'
+import { blankSheet, getSheet, saveSheet, sheetTitle, todayStr, findDuplicate, useSheets } from './sheetStore'
+import { importExcel } from './excel'
+
+// Section anchors for the in-editor quick nav (recognition over recall).
+const SECTIONS = [
+  ['header', 'ข้อมูลเอกสาร'],
+  ['component', 'ส่วนประกอบ'],
+  ['process', 'กระบวนการผลิต'],
+  ['sketch', 'แบบชิ้นงาน'],
+  ['records', 'บันทึกการแก้ไข'],
+]
+
+export default function Editor() {
+  const { id } = useParams()
+  const navigate = useNavigate()
+  const methods = useForm({ defaultValues: blankSheet() })
+  const { isDirty } = methods.formState
+  const [notFound, setNotFound] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [preview, setPreview] = useState(false)
+  const sheets = useSheets()
+  const currentModel = methods.watch('model')
+
+  // Other parts that share this document's MODEL — for the top Part No. switcher.
+  const partOptions = useMemo(() => {
+    const m = (currentModel || '').trim().toLowerCase()
+    return [...sheets]
+      .filter((s) => { const sm = (s.data.model || '').trim().toLowerCase(); return !m || sm === m })
+      .sort((a, b) => (a.data.partNo || '').localeCompare(b.data.partNo || ''))
+  }, [sheets, currentModel])
+
+  // Load the record into the form.
+  useEffect(() => {
+    const rec = getSheet(id)
+    if (!rec) { setNotFound(true); return }
+    methods.reset(rec.data)
+    setReady(true)
+  }, [id, methods])
+
+  // --- Save (manual; auto-save removed) ---
+  const handleSave = () => {
+    const values = methods.getValues()
+    // Hard block: a document with the same PART No. + REVISION No. is not allowed.
+    const dup = findDuplicate(values.partNo, values.revisionNo, id)
+    if (dup) {
+      alert(
+        `บันทึกไม่ได้: มีเอกสาร Part No. "${values.partNo}" Rev. "${values.revisionNo}" อยู่แล้ว\n\n` +
+          'กรุณาแก้ Part No. หรือ Revision No. ให้ไม่ซ้ำก่อนบันทึก',
+      )
+      return
+    }
+    saveSheet(id, values)
+    methods.reset(values) // adopt saved values as the new clean baseline
+  }
+
+  // --- Import / template (.xlsx) ---
+  const handleImport = async (e) => {
+    const file = e.target.files?.[0]
+    e.target.value = '' // allow re-importing the same file
+    if (!file) return
+    try {
+      // Sheet picker for multi-sheet (TC Format Rev.2) workbooks.
+      const pickSheet = (names) => {
+        const ans = window.prompt(
+          'ไฟล์นี้มีหลาย sheet เลือกที่จะนำเข้า (พิมพ์เลข):\n\n' +
+            names.map((n, i) => `${i + 1}. ${n}`).join('\n'),
+          '1',
+        )
+        if (ans == null) return null
+        const idx = parseInt(ans, 10) - 1
+        return names[idx] || null
+      }
+
+      const result = await importExcel(file, pickSheet)
+      if (result === null) return // user cancelled the sheet picker
+
+      const parsed = result.data
+      const count = Object.values(parsed).filter((v) => typeof v === 'string' && v.trim() !== '').length
+      if (count === 0) {
+        alert(
+          'ไม่พบข้อมูลที่ตรงกับฟอร์มในไฟล์นี้\n\n' +
+            'รองรับ 2 รูปแบบ:\n' +
+            '• ไฟล์ Technical Sheet จริง (TC Format Rev.2)\n' +
+            '• ไฟล์ 2 คอลัมน์ (A = ชื่อฟิลด์ เช่น partNo, B = ค่า) — กด "เทมเพลต Excel" เพื่อดูตัวอย่าง',
+        )
+        return
+      }
+
+      const cur = methods.getValues()
+      methods.reset(
+        { ...cur, ...parsed, issuedDate: todayStr() }, // keep the issued date current
+        { keepDefaultValues: true },
+      )
+      const from = result.source ? ` จาก sheet "${result.source}"` : ''
+      alert(`นำเข้าสำเร็จ: เติมข้อมูล ${count} ฟิลด์${from}`)
+    } catch (err) {
+      alert('นำเข้าไฟล์ Excel ไม่สำเร็จ: ' + err.message)
+    }
+  }
+
+  // --- Warn on unsaved changes ---
+  // 1) Tab close / refresh
+  useEffect(() => {
+    const handler = (e) => {
+      if (!isDirty) return
+      e.preventDefault()
+      e.returnValue = ''
+    }
+    window.addEventListener('beforeunload', handler)
+    return () => window.removeEventListener('beforeunload', handler)
+  }, [isDirty])
+
+  // 2) In-app navigation (e.g. back to dashboard)
+  const blocker = useBlocker(() => isDirty)
+  useEffect(() => {
+    if (blocker.state !== 'blocked') return
+    if (window.confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการออกจากหน้านี้หรือไม่?')) {
+      blocker.proceed()
+    } else {
+      blocker.reset()
+    }
+  }, [blocker])
+
+  const partName = methods.watch('partName')
+  const partNo = methods.watch('partNo')
+  const title = sheetTitle({ partName, partNo })
+
+  const scrollTo = (anchor) => {
+    document.getElementById(`sec-${anchor}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }
+
+  if (notFound) {
+    return (
+      <div className="editor-missing">
+        <div className="empty-art">🚫</div>
+        <h2>ไม่พบเอกสารนี้</h2>
+        <button className="btn primary" onClick={() => navigate('/')}>กลับหน้าหลัก</button>
+      </div>
+    )
+  }
+  if (!ready) return <div className="editor-loading">กำลังโหลด…</div>
+
+  const hasCurrent = partOptions.some((s) => s.id === id)
+
+  return (
+    <div className={`editor ${preview ? 'previewing' : ''}`}>
+      {/* Export preview toolbar (overlay) */}
+      {preview && (
+        <div className="preview-bar no-print">
+          <div className="preview-title">ตัวอย่างก่อน Export — {title}</div>
+          <div className="preview-actions">
+            <button className="btn" onClick={() => setPreview(false)}>✕ ปิด</button>
+            <button className="btn primary" onClick={() => window.print()}>🖨️ พิมพ์ / บันทึก PDF</button>
+          </div>
+        </div>
+      )}
+
+      {/* App bar */}
+      <header className="ed-bar no-print">
+        <button className="back-btn" onClick={() => navigate('/')} title="กลับหน้าหลัก">←</button>
+        <div className="ed-title-wrap">
+          <div className="ed-title">{title}</div>
+          <div className={`ed-status ${isDirty ? 'unsaved' : 'saved'}`}>
+            {isDirty ? <>● มีการแก้ไขที่ยังไม่บันทึก</> : <>✓ บันทึกแล้ว</>}
+          </div>
+        </div>
+        <div className="ed-actions">
+          {/* Part No. switcher (same MODEL) */}
+          <select
+            className="partno-top"
+            value={id}
+            onChange={(e) => { if (e.target.value !== id) navigate(`/sheet/${e.target.value}`) }}
+            title="เลือก Part No. (รุ่นเดียวกัน)"
+          >
+            {!hasCurrent && <option value={id}>{partNo || '(เอกสารนี้)'}</option>}
+            {partOptions.map((s) => (
+              <option key={s.id} value={s.id}>
+                {(s.data.partNo || '—') + ' (Rev.' + (s.data.revisionNo || '-') + ')'}
+              </option>
+            ))}
+          </select>
+
+          <label className="btn ghost">
+            📥 นำเข้า Excel
+            <input
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+              onChange={handleImport}
+              hidden
+            />
+          </label>
+          <button className="btn ghost" onClick={() => setPreview(true)}>👁️ Export</button>
+          <button className="btn primary" onClick={handleSave} disabled={!isDirty}>💾 บันทึก</button>
+        </div>
+      </header>
+
+      <div className="ed-layout">
+        {/* Section nav */}
+        <nav className="ed-nav no-print">
+          <div className="ed-nav-label">ไปยังส่วน</div>
+          {SECTIONS.map(([anchor, label]) => (
+            <button key={anchor} onClick={() => scrollTo(anchor)}>{label}</button>
+          ))}
+        </nav>
+
+        <div className="ed-canvas">
+          <FormProvider {...methods}>
+            <TechnicalSheet />
+          </FormProvider>
+        </div>
+      </div>
+    </div>
+  )
+}

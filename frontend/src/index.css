@@ -1,0 +1,15 @@
+/* Minimal reset — design system lives in sheet.css */
+:root {
+  color-scheme: light;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+}
+
+html, body, #root {
+  margin: 0;
+  min-height: 100vh;
+}
+
+h1, h2, h3, p { margin: 0; }
+
+button { font-family: inherit; }
