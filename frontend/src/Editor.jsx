@@ -6,11 +6,11 @@ import { blankSheet, getSheet, saveSheet, sheetTitle, findDuplicate, useSheets, 
 
 // Section anchors for the in-editor quick nav (recognition over recall).
 const SECTIONS = [
-  ['header', 'ข้อมูลเอกสาร'],
-  ['component', 'ส่วนประกอบ'],
-  ['process', 'กระบวนการผลิต'],
-  ['sketch', 'แบบชิ้นงาน'],
-  ['records', 'บันทึกการแก้ไข'],
+  ['header', 'Document info'],
+  ['component', 'Components'],
+  ['process', 'Process'],
+  ['sketch', 'Part sketch'],
+  ['records', 'Revise record'],
 ]
 
 export default function Editor() {
@@ -47,8 +47,8 @@ export default function Editor() {
     const dup = findDuplicate(values.partNo, values.revisionNo, id)
     if (dup) {
       alert(
-        `บันทึกไม่ได้: มีเอกสาร Part No. "${values.partNo}" Rev. "${values.revisionNo}" อยู่แล้ว\n\n` +
-          'กรุณาแก้ Part No. หรือ Revision No. ให้ไม่ซ้ำก่อนบันทึก',
+        `Cannot save: a document with Part No. "${values.partNo}" Rev. "${values.revisionNo}" already exists\n\n` +
+          'Please change the Part No. or Revision No. to avoid a duplicate before saving',
       )
       return
     }
@@ -78,7 +78,7 @@ export default function Editor() {
   const blocker = useBlocker(() => isDirty)
   useEffect(() => {
     if (blocker.state !== 'blocked') return
-    if (window.confirm('มีการแก้ไขที่ยังไม่บันทึก ต้องการออกจากหน้านี้หรือไม่?')) {
+    if (window.confirm('You have unsaved changes. Leave this page?')) {
       blocker.proceed()
     } else {
       blocker.reset()
@@ -97,12 +97,12 @@ export default function Editor() {
     return (
       <div className="editor-missing">
         <div className="empty-art">🚫</div>
-        <h2>ไม่พบเอกสารนี้</h2>
-        <button className="btn primary" onClick={() => navigate('/')}>กลับหน้าหลัก</button>
+        <h2>Document not found</h2>
+        <button className="btn primary" onClick={() => navigate('/')}>Back to home</button>
       </div>
     )
   }
-  if (!ready) return <div className="editor-loading">กำลังโหลด…</div>
+  if (!ready) return <div className="editor-loading">Loading…</div>
 
   const hasCurrent = partOptions.some((s) => s.id === id)
 
@@ -111,21 +111,21 @@ export default function Editor() {
       {/* Export preview toolbar (overlay) */}
       {preview && (
         <div className="preview-bar no-print">
-          <div className="preview-title">ตัวอย่างก่อน Export — {title}</div>
+          <div className="preview-title">Preview before export — {title}</div>
           <div className="preview-actions">
-            <button className="btn" onClick={() => setPreview(false)}>✕ ปิด</button>
-            <button className="btn primary" onClick={() => window.print()}>🖨️ พิมพ์ / บันทึก PDF</button>
+            <button className="btn" onClick={() => setPreview(false)}>✕ Close</button>
+            <button className="btn primary" onClick={() => window.print()}>🖨️ Print / Save PDF</button>
           </div>
         </div>
       )}
 
       {/* App bar */}
       <header className="ed-bar no-print">
-        <button className="back-btn" onClick={() => navigate('/')} title="กลับหน้าหลัก">←</button>
+        <button className="back-btn" onClick={() => navigate('/')} title="Back to home">←</button>
         <div className="ed-title-wrap">
           <div className="ed-title">{title}</div>
           <div className={`ed-status ${isDirty ? 'unsaved' : 'saved'}`}>
-            {isDirty ? <>● มีการแก้ไขที่ยังไม่บันทึก</> : <>✓ บันทึกแล้ว</>}
+            {isDirty ? <>● Unsaved changes</> : <>✓ Saved</>}
           </div>
         </div>
         <div className="ed-actions">
@@ -134,9 +134,9 @@ export default function Editor() {
             className="partno-top"
             value={id}
             onChange={(e) => { if (e.target.value !== id) navigate(`/sheet/${e.target.value}`) }}
-            title="เลือก Part No. (รุ่นเดียวกัน)"
+            title="Select Part No. (same model)"
           >
-            {!hasCurrent && <option value={id}>{partNo || '(เอกสารนี้)'}</option>}
+            {!hasCurrent && <option value={id}>{partNo || '(this document)'}</option>}
             {partOptions.map((s) => (
               <option key={s.id} value={s.id}>
                 {(s.data.partNo || '—') + ' (Rev.' + (s.data.revisionNo || '-') + ')'}
@@ -144,18 +144,18 @@ export default function Editor() {
             ))}
           </select>
 
-          <button className="btn ghost" onClick={handleNewInModel} title="สร้างเอกสาร Part No. ใหม่ ใน Model เดียวกัน">
-            ＋ Part No. ใหม่
+          <button className="btn ghost" onClick={handleNewInModel} title="Create a new Part No. document in the same Model">
+            ＋ New Part No.
           </button>
           <button className="btn ghost" onClick={() => setPreview(true)}>👁️ Export</button>
-          <button className="btn primary" onClick={handleSave} disabled={!isDirty}>💾 บันทึก</button>
+          <button className="btn primary" onClick={handleSave} disabled={!isDirty}>💾 Save</button>
         </div>
       </header>
 
       <div className="ed-layout">
         {/* Section nav */}
         <nav className="ed-nav no-print">
-          <div className="ed-nav-label">ไปยังส่วน</div>
+          <div className="ed-nav-label">Jump to section</div>
           {SECTIONS.map(([anchor, label]) => (
             <button key={anchor} onClick={() => scrollTo(anchor)}>{label}</button>
           ))}

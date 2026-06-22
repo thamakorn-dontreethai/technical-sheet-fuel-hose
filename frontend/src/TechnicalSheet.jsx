@@ -69,15 +69,15 @@ function TechnicalSheet() {
             <td className="lbl">MODEL</td>
             <td className="val"><V name="model" /></td>
             <td className="lbl">CODE</td>
-            <td className="val"><V name="code" placeholder="เลือก part no." /></td>
+            <td className="val"><V name="code" placeholder="Select part no." /></td>
             <td className="lbl">DOCUMENT No.</td>
             <td className="val"><V name="documentNo" /></td>
           </tr>
           <tr>
             <td className="lbl">PART No.</td>
-            <td className="val" colSpan={3}><V name="partNo" placeholder="เลือก part No." /></td>
+            <td className="val" colSpan={3}><V name="partNo" placeholder="Select part No." /></td>
             <td className="lbl">ISSUED DATE</td>
-            <td className="val"><V name="issuedDate" placeholder="ตั้งวันปัจจุบัน" /></td>
+            <td className="val"><V name="issuedDate" placeholder="Auto: today" /></td>
           </tr>
           <tr>
             <td className="lbl">PART NAME</td>
@@ -300,13 +300,13 @@ function TechnicalSheet() {
       <div id="sec-records" className="records">
         <div className="record-block">
           <div className="record-title">
-            บันทึกการแก้ไข (REVISE RECORD)
+            REVISE RECORD
             <button className="add-row no-print" onClick={addRevise}>+ row</button>
           </div>
           <table className="grid record-grid">
             <thead>
               <tr>
-                <th>ครั้งที่</th><th>วันที่</th><th className="detail-col">รายละเอียดการแก้ไข</th>
+                <th>No.</th><th>Date</th><th className="detail-col">Description of Revision</th>
                 <th>PE.</th><th>PROD.</th><th>QA.</th>
               </tr>
             </thead>
@@ -327,12 +327,12 @@ function TechnicalSheet() {
 
         <div className="record-block training">
           <div className="record-title">
-            บันทึกการฝึกอบรม
+TRAINING RECORD
             <button className="add-row no-print" onClick={addTraining}>+ row</button>
           </div>
           <table className="grid record-grid">
             <thead>
-              <tr><th>วันที่</th><th>ผู้สอน</th><th>ผู้เรียน</th></tr>
+              <tr><th>Date</th><th>Trainer</th><th>Trainee</th></tr>
             </thead>
             <tbody>
               {training.fields.map((f, i) => (
@@ -385,7 +385,7 @@ function SketchSlot({ label, value, onPick, onClear }) {
         </div>
       ) : (
         <label className="sketch-drop no-print">
-          <span>คลิกเพื่อใส่รูป</span>
+          <span>Click to add image</span>
           <input type="file" accept="image/*" onChange={onPick} hidden />
         </label>
       )}

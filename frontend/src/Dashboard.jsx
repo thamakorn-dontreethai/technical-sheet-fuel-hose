@@ -6,7 +6,7 @@ import {
 import { importAllSheets } from './excel'
 
 function fmtDate(ts) {
-  return new Date(ts).toLocaleString('th-TH', {
+  return new Date(ts).toLocaleString('en-GB', {
     day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit',
   })
 }
@@ -30,7 +30,7 @@ export default function Dashboard() {
   const groups = useMemo(() => {
     const map = new Map()
     for (const s of filtered) {
-      const m = (s.data.model || '').trim() || '— ไม่ระบุ MODEL —'
+      const m = (s.data.model || '').trim() || '— No model —'
       if (!map.has(m)) map.set(m, [])
       map.get(m).push(s)
     }
@@ -43,7 +43,7 @@ export default function Dashboard() {
   }
 
   const handleDeleteGroup = (list) => {
-    if (confirm(`ลบเอกสารทั้งหมดในกลุ่มนี้ (${list.length} รายการ) อย่างถาวร?`)) {
+    if (confirm(`Permanently delete all documents in this group (${list.length} items)?`)) {
       list.forEach((s) => deleteSheet(s.id))
     }
   }
@@ -60,8 +60,8 @@ export default function Dashboard() {
       )
       if (valid.length === 0) {
         alert(
-          'ไม่พบข้อมูลที่ตรงกับฟอร์มในไฟล์นี้\n\n' +
-            'รองรับ: ไฟล์ Technical Sheet จริง (TC Format Rev.2) หรือไฟล์ 2 คอลัมน์ (กด "เทมเพลต Excel")',
+          'No matching data found in this file\n\n' +
+            'Supported: a real Technical Sheet file (TC Format Rev.2) or a 2-column (field/value) file',
         )
         return
       }
@@ -75,11 +75,11 @@ export default function Dashboard() {
         else { createSheetFromData(r.data); fresh.push(r) }
       }
 
-      let msg = `สร้าง ${fresh.length} เอกสาร`
-      if (skipped > 0) msg += `, ข้ามรายการซ้ำ ${skipped} (มีอยู่แล้ว)`
-      alert('นำเข้าสำเร็จ: ' + msg)
+      let msg = `created ${fresh.length} document(s)`
+      if (skipped > 0) msg += `, skipped ${skipped} duplicate(s) (already exist)`
+      alert('Import complete: ' + msg)
     } catch (err) {
-      alert('นำเข้าไฟล์ Excel ไม่สำเร็จ: ' + err.message)
+      alert('Excel import failed: ' + err.message)
     }
   }
 
@@ -91,13 +91,13 @@ export default function Dashboard() {
           <div className="logo-mark">FH</div>
           <div>
             <div className="dash-brand-title">Fuel Hose Technical Sheet</div>
-            <div className="dash-brand-sub">ระบบจัดการเอกสารทางเทคนิค</div>
+            <div className="dash-brand-sub">Technical document management</div>
           </div>
         </div>
         <div className="dash-bar-actions">
           
           <label className="btn lg">
-            📥 นำเข้า Excel
+            📥 Import Excel
             <input
               type="file"
               accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
@@ -106,7 +106,7 @@ export default function Dashboard() {
             />
           </label>
           <button className="btn primary lg" onClick={() => handleNew(false)}>
-            <span className="ic">＋</span> สร้างเอกสารใหม่
+            <span className="ic">＋</span> New document
           </button>
         </div>
       </header>
@@ -114,14 +114,14 @@ export default function Dashboard() {
       <main className="dash-body">
         <div className="dash-head">
           <div>
-            <h1 className="dash-h1">เอกสารทั้งหมด</h1>
-            <p className="dash-count">{sheets.length} เอกสาร</p>
+            <h1 className="dash-h1">All documents</h1>
+            <p className="dash-count">{sheets.length} documents</p>
           </div>
           {sheets.length > 0 && (
             <div className="search">
               <span className="search-ic">🔍</span>
               <input
-                placeholder="ค้นหาด้วยชื่อ / Part No. / Model…"
+                placeholder="Search by name / Part No. / Model…"
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
               />
@@ -133,22 +133,22 @@ export default function Dashboard() {
         {sheets.length === 0 ? (
           <div className="empty-state">
             <div className="empty-art">📄</div>
-            <h2>ยังไม่มีเอกสาร</h2>
-            <p>เริ่มต้นด้วยการสร้าง Technical Sheet ฉบับแรกของคุณ</p>
+            <h2>No documents yet</h2>
+            <p>Start by creating your first Technical Sheet</p>
             <div className="empty-actions">
               <button className="btn primary lg" onClick={() => handleNew(false)}>
-                <span className="ic">＋</span> สร้างเอกสารเปล่า
+                <span className="ic">＋</span> Create blank document
               </button>
               <button className="btn ghost lg" onClick={() => handleNew(true)}>
-                เริ่มจากตัวอย่าง
+                Start from example
               </button>
             </div>
           </div>
         ) : filtered.length === 0 ? (
           <div className="empty-state small">
             <div className="empty-art">🔍</div>
-            <h2>ไม่พบเอกสารที่ค้นหา</h2>
-            <p>ลองคำค้นอื่น หรือล้างช่องค้นหา</p>
+            <h2>No documents found</h2>
+            <p>Try another search term or clear the search box</p>
           </div>
         ) : (
           <div className="card-grid">
@@ -191,7 +191,7 @@ function ModelCard({ model, sheets, onOpen, onDeleteGroup }) {
           {menuOpen && (
             <div className="doc-menu">
               <button className="danger" onClick={() => { setMenuOpen(false); onDeleteGroup(sheets) }}>
-                ลบทั้งกลุ่ม ({sheets.length})
+                Delete group ({sheets.length})
               </button>
             </div>
           )}
@@ -200,10 +200,10 @@ function ModelCard({ model, sheets, onOpen, onDeleteGroup }) {
 
       <h3 className="doc-title model-name" onClick={() => onOpen(latest.id)}>{model}</h3>
       <dl className="doc-meta">
-        <div><dt>จำนวน Part</dt><dd>{sheets.length}</dd></div>
-        <div><dt>แก้ไขล่าสุด</dt><dd>{fmtDate(latest.updatedAt)}</dd></div>
+        <div><dt>Parts</dt><dd>{sheets.length}</dd></div>
+        <div><dt>Last edited</dt><dd>{fmtDate(latest.updatedAt)}</dd></div>
       </dl>
-      <button className="btn sm open-btn" onClick={() => onOpen(latest.id)}>เปิดเอกสาร</button>
+      <button className="btn sm open-btn" onClick={() => onOpen(latest.id)}>Open document</button>
     </article>
   )
 }

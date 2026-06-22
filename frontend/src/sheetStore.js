@@ -20,7 +20,7 @@ function writeAll(list) {
 }
 
 export function sheetTitle(data) {
-  return data.partName?.trim() || data.partNo?.trim() || 'เอกสารไม่มีชื่อ'
+  return data.partName?.trim() || data.partNo?.trim() || 'Untitled document'
 }
 
 // Hook giving a live list of all sheets.
