@@ -160,7 +160,6 @@ export default function Editor() {
             <button key={anchor} onClick={() => scrollTo(anchor)}>{label}</button>
           ))}
         </nav>
-
         <div className="ed-canvas">
           <FormProvider {...methods}>
             <TechnicalSheet />

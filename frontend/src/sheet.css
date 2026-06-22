@@ -307,7 +307,7 @@ body {
    THE SHEET (printable form)
    ===================================================================== */
 .sheet {
-  width: 940px; max-width: 100%; margin: 0 auto;
+  width: 940px; margin: 0 auto;          /* fixed doc width; scrolls on small screens */
   background: #fff; border: 2px solid var(--sheet-line);
   box-shadow: var(--shadow-lg); font-size: 13px;
   /* Match the official Thai document font */
@@ -513,7 +513,47 @@ body {
   .form-footer { font-size: 7.6px; padding: 2px 6px; }
 }
 
-@media (max-width: 720px) {
+/* =====================================================================
+   RESPONSIVE — tablet & phone
+   Chrome (bars/nav/cards) reflows; the A4 sheet stays fixed-width and
+   scrolls horizontally inside its canvas so text never gets squished.
+   ===================================================================== */
+
+/* Tablet */
+@media (max-width: 1024px) {
+  .dash-body { padding: 24px 18px 48px; }
+  .ed-nav { width: 150px; padding: 20px 10px; }
+}
+
+/* Narrow tablet / large phone: drop the editor side-nav */
+@media (max-width: 860px) {
   .ed-nav { display: none; }
-  .search { min-width: 0; flex: 1; }
+  .ed-layout { display: block; }
+  .ed-canvas { padding: 16px; }
+}
+
+/* Phone */
+@media (max-width: 640px) {
+  /* ---- Dashboard ---- */
+  .dash-bar { height: auto; flex-wrap: wrap; gap: 10px; padding: 12px 16px; }
+  .dash-bar-actions { width: 100%; flex-wrap: wrap; }
+  .dash-bar-actions .btn { flex: 1 1 auto; justify-content: center; }
+  .dash-body { padding: 18px 14px 40px; }
+  .dash-head { flex-direction: column; align-items: stretch; gap: 12px; }
+  .dash-h1 { font-size: 20px; }
+  .search { width: 100%; min-width: 0; }
+  .card-grid { grid-template-columns: 1fr; gap: 14px; }
+  .empty-state { padding: 48px 18px; }
+
+  /* ---- Editor ---- */
+  .ed-bar { height: auto; flex-wrap: wrap; gap: 8px; padding: 10px 12px; }
+  .ed-title { white-space: normal; }
+  .ed-actions { width: 100%; flex-wrap: wrap; gap: 6px; }
+  .ed-actions .btn, .partno-top { flex: 1 1 auto; min-width: 0; max-width: none; }
+  .ed-canvas { padding: 12px; }
+
+  /* ---- Export preview ---- */
+  .preview-bar { height: auto; flex-wrap: wrap; gap: 8px; padding: 8px 12px; }
+  .preview-title { flex-basis: 100%; }
+  .editor.previewing .ed-canvas { padding-top: 104px; }
 }
