@@ -284,6 +284,70 @@ body {
 .editor.previewing .add-row,
 .editor.previewing .sketch-drop { display: none !important; }
 
+/* While EDITING (screen, not previewing): split the sheet into separated section
+   blocks for easier reading. In Export preview & print the sheet stays continuous,
+   exactly like the original document. */
+@media screen {
+  .editor:not(.previewing) .sheet {
+    display: flex; flex-direction: column; gap: 14px;
+    background: transparent; border: none; box-shadow: none;
+    width: 100%; max-width: 1080px; font-size: 16px;   /* larger & roomier for editing */
+  }
+  .editor:not(.previewing) .sheet > * {
+    background: #fff;
+    border: 1.5px solid var(--sheet-line);
+    box-shadow: var(--shadow-sm);
+  }
+  /* Comfortable input sizing while editing one section at a time */
+  .editor:not(.previewing) .cell-input { padding: 9px 11px; }
+  .editor:not(.previewing) .lbl { font-size: 13px; padding: 9px 11px; }
+  .editor:not(.previewing) .grid td { height: auto; }
+  .editor:not(.previewing) .unit, .editor:not(.previewing) .unit-cell { font-size: 12px; }
+  .editor:not(.previewing) .record-grid .cell-input { font-size: 14px; }
+  .editor:not(.previewing) .record-grid th { font-size: 12px; padding: 6px; }
+
+  /* Prevent label text from spilling past cell borders: allow wrapping while editing */
+  .editor:not(.previewing) .lbl,
+  .editor:not(.previewing) .unit-cell,
+  .editor:not(.previewing) .item-hdr td,
+  .editor:not(.previewing) .lubricant-cell {
+    white-space: normal; word-break: break-word; line-height: 1.25;
+  }
+  .editor:not(.previewing) .grid td { overflow: hidden; }
+
+  /* Bigger, more readable vertical section tags while editing */
+  .editor:not(.previewing) .section-tag,
+  .editor:not(.previewing) .step-tag {
+    font-size: 13px; letter-spacing: 1px;
+    width: 36px; min-width: 36px; max-width: 36px;
+  }
+  .editor:not(.previewing) .sub-tag {
+    font-size: 12px; width: 26px; min-width: 26px; max-width: 26px;
+  }
+  .editor:not(.previewing) .center-tag { font-size: 15px; padding: 9px; }
+
+  /* --- Paged editing: show ONLY the active section --- */
+  .editor:not(.previewing) .sheet > [data-section] { display: none; }
+  .editor:not(.previewing) .sheet > [data-section].is-active { display: revert; }
+
+  /* The 2-column process block: visible only when a process section is active,
+     laid out as a single full-width column. */
+  .editor:not(.previewing) .sheet > .body-split { display: none; }
+  .editor:not(.previewing) .sheet > .body-split.split-active { display: block; }
+  .editor:not(.previewing) .body-split.split-active .body-left,
+  .editor:not(.previewing) .body-split.split-active .body-right {
+    width: 100%; border: none; display: block;
+  }
+  .editor:not(.previewing) .body-left > [data-section],
+  .editor:not(.previewing) .body-right > [data-section] { display: none; }
+  .editor:not(.previewing) .body-left > [data-section].is-active,
+  .editor:not(.previewing) .body-right > [data-section].is-active { display: revert; }
+}
+
+/* Active page tab */
+.ed-nav button.active { background: var(--primary); color: #fff; }
+.ed-nav button.active:hover { background: var(--primary-dark); color: #fff; }
+
 .ed-layout { display: flex; flex: 1; }
 .ed-nav {
   width: 180px; flex-shrink: 0; padding: 24px 14px;
@@ -525,10 +589,16 @@ body {
   .ed-nav { width: 150px; padding: 20px 10px; }
 }
 
-/* Narrow tablet / large phone: drop the editor side-nav */
+/* Narrow tablet / large phone: page tabs become a horizontal scroll bar */
 @media (max-width: 860px) {
-  .ed-nav { display: none; }
   .ed-layout { display: block; }
+  .ed-nav {
+    width: auto; padding: 10px 12px;
+    display: flex; gap: 6px; overflow-x: auto; white-space: nowrap;
+    background: var(--surface); border-bottom: 1px solid var(--line);
+  }
+  .ed-nav-label { display: none; }
+  .ed-nav button { width: auto; flex: 0 0 auto; margin-bottom: 0; }
   .ed-canvas { padding: 16px; }
 }
 

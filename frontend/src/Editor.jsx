@@ -5,12 +5,17 @@ import TechnicalSheet from './TechnicalSheet'
 import { blankSheet, getSheet, saveSheet, sheetTitle, findDuplicate, useSheets, createSheetFromData } from './sheetStore'
 
 // Section anchors for the in-editor quick nav (recognition over recall).
+// One editing page per section; export/print shows them all combined.
 const SECTIONS = [
   ['header', 'Document info'],
   ['component', 'Components'],
-  ['process', 'Process'],
+  ['cut', '① Hose cutting'],
+  ['flare', '② Flare & insertion'],
+  ['heat', '③ Heating & bending'],
+  ['leak', '④ Leak test'],
+  ['inspect', '⑤ Inspection'],
   ['sketch', 'Part sketch'],
-  ['records', 'Revise record'],
+  ['records', 'Records'],
 ]
 
 export default function Editor() {
@@ -21,6 +26,7 @@ export default function Editor() {
   const [notFound, setNotFound] = useState(false)
   const [ready, setReady] = useState(false)
   const [preview, setPreview] = useState(false)
+  const [activeSection, setActiveSection] = useState('header')
   const sheets = useSheets()
   const currentModel = methods.watch('model')
 
@@ -89,10 +95,6 @@ export default function Editor() {
   const partNo = methods.watch('partNo')
   const title = sheetTitle({ partName, partNo })
 
-  const scrollTo = (anchor) => {
-    document.getElementById(`sec-${anchor}`)?.scrollIntoView({ behavior: 'smooth', block: 'start' })
-  }
-
   if (notFound) {
     return (
       <div className="editor-missing">
@@ -153,16 +155,22 @@ export default function Editor() {
       </header>
 
       <div className="ed-layout">
-        {/* Section nav */}
+        {/* Section pages */}
         <nav className="ed-nav no-print">
-          <div className="ed-nav-label">Jump to section</div>
-          {SECTIONS.map(([anchor, label]) => (
-            <button key={anchor} onClick={() => scrollTo(anchor)}>{label}</button>
+          <div className="ed-nav-label">Pages</div>
+          {SECTIONS.map(([key, label]) => (
+            <button
+              key={key}
+              className={activeSection === key ? 'active' : ''}
+              onClick={() => setActiveSection(key)}
+            >
+              {label}
+            </button>
           ))}
         </nav>
         <div className="ed-canvas">
           <FormProvider {...methods}>
-            <TechnicalSheet />
+            <TechnicalSheet activeSection={activeSection} />
           </FormProvider>
         </div>
       </div>

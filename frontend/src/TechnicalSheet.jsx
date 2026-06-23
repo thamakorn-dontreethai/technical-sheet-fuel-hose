@@ -20,10 +20,16 @@ function V({ name, placeholder = '', align = 'center' }) {
   )
 }
 
-function TechnicalSheet() {
+// Process sections live inside the 2-column body-split.
+const SPLIT_SECTIONS = ['cut', 'flare', 'heat', 'leak', 'inspect', 'sketch']
+
+function TechnicalSheet({ activeSection = 'header' }) {
   const { control, setValue, register } = useFormContext()
   const revise = useFieldArray({ control, name: 'reviseRecord' })
   const training = useFieldArray({ control, name: 'trainingRecord' })
+
+  // When editing, only the active section shows (CSS). 'is-active' marks it.
+  const act = (key) => (activeSection === key ? 'is-active' : '')
 
   // Sketch images live in form state as data-urls.
   const sketchBefore = useWatch({ control, name: 'sketchBefore' })
@@ -43,7 +49,7 @@ function TechnicalSheet() {
   return (
     <div className="sheet">
       {/* ============ TITLE BAR ============ */}
-      <table id="sec-header" className="grid title-grid">
+      <table id="sec-header" data-section="header" className={`grid title-grid ${act('header')}`}>
         <tbody>
           <tr>
             <td className="title-cell" rowSpan={2}>
@@ -63,7 +69,7 @@ function TechnicalSheet() {
       </table>
 
       {/* ============ META ============ */}
-      <table className="grid meta-grid">
+      <table data-section="header" className={`grid meta-grid ${act('header')}`}>
         <tbody>
           <tr>
             <td className="lbl">MODEL</td>
@@ -89,7 +95,7 @@ function TechnicalSheet() {
       </table>
 
       {/* ============ COMPONENT ============ */}
-      <table id="sec-component" className="grid component-grid">
+      <table id="sec-component" data-section="component" className={`grid component-grid ${act('component')}`}>
         <tbody>
           {[
             ['TUBE', 'tube', 'tubePartNo', 'PART No.', 'PROTECTOR', 'protector3', 'protector3PartNo', 'PART No. (#3)'],
@@ -108,11 +114,11 @@ function TechnicalSheet() {
       </table>
 
       {/* ============ MAIN BODY : left process column + right sketch column ============ */}
-      <div id="sec-process" className="body-split">
+      <div id="sec-process" className={`body-split ${SPLIT_SECTIONS.includes(activeSection) ? 'split-active' : ''}`}>
         {/* ---------- LEFT ---------- */}
         <div className="body-left">
           {/* (1) HOSE CUTTING */}
-          <table className="grid proc-grid">
+          <table data-section="cut" className={`grid proc-grid ${act('cut')}`}>
             <tbody>
               <tr>
                 <td className="step-tag" rowSpan={3}><span>① HOSE CUTTING</span></td>
@@ -131,7 +137,7 @@ function TechnicalSheet() {
           </table>
 
           {/* (2) FLARE & INSERTION */}
-          <table className="grid proc-grid flare-grid">
+          <table data-section="flare" className={`grid proc-grid flare-grid ${act('flare')}`}>
             <colgroup>
               <col style={{ width: '4%' }} />
               <col style={{ width: '15%' }} />
@@ -237,7 +243,7 @@ function TechnicalSheet() {
           </table>
 
           {/* (4) LEAK TEST */}
-          <table className="grid proc-grid">
+          <table data-section="leak" className={`grid proc-grid ${act('leak')}`}>
             <tbody>
               <tr>
                 <td className="step-tag" rowSpan={3}><span>④ LEAK TEST</span></td>
@@ -263,14 +269,14 @@ function TechnicalSheet() {
         {/* ---------- RIGHT ---------- */}
         <div className="body-right">
           {/* PART SKETCH */}
-          <div id="sec-sketch" className="sketch-box">
+          <div id="sec-sketch" data-section="sketch" className={`sketch-box ${act('sketch')}`}>
             <div className="sketch-title">PART SKETCH</div>
             <SketchSlot label="BEFORE BENDING" value={sketchBefore} onPick={pickImage('sketchBefore')} onClear={() => setValue('sketchBefore', '', { shouldDirty: true })} />
             <SketchSlot label="AFTER BENDING" value={sketchAfter} onPick={pickImage('sketchAfter')} onClear={() => setValue('sketchAfter', '', { shouldDirty: true })} />
           </div>
 
           {/* (3) HEATING & BENDING */}
-          <table className="grid proc-grid">
+          <table data-section="heat" className={`grid proc-grid ${act('heat')}`}>
             <tbody>
               <tr><td className="step-tag center-tag" colSpan={2}>③ HEATING &amp; BENDING</td></tr>
               <tr><td className="lbl wide">AIR SUPPLY PRESSURE</td><td className="val"><div className="vu"><V name="heatAirPressure" /><span className="unit">MPa.</span></div></td></tr>
@@ -284,7 +290,7 @@ function TechnicalSheet() {
           </table>
 
           {/* (5) INSPECTION */}
-          <table className="grid proc-grid">
+          <table data-section="inspect" className={`grid proc-grid ${act('inspect')}`}>
             <tbody>
               <tr><td className="step-tag center-tag" colSpan={2}>⑤ INSPECTION</td></tr>
               <tr><td className="lbl wide">INSPECTION GAUGE</td><td className="val"><V name="inspectionGauge" /></td></tr>
@@ -297,7 +303,7 @@ function TechnicalSheet() {
       </div>
 
       {/* ============ REVISE RECORD ============ */}
-      <div id="sec-records" className="records">
+      <div id="sec-records" data-section="records" className={`records ${act('records')}`}>
         <div className="record-block">
           <div className="record-title">
             REVISE RECORD
@@ -347,7 +353,7 @@ TRAINING RECORD
         </div>
       </div>
 
-      <div className="form-footer">FM-PE30/FPE-A-027 Rev.01 (28/06/16)</div>
+      <div data-section="records" className={`form-footer ${act('records')}`}>FM-PE30/FPE-A-027 Rev.01 (28/06/16)</div>
     </div>
   )
 }
